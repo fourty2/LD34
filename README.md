@@ -16,6 +16,13 @@ Step 1:
 
 / punkte, progress
 
+Step 1b:
+* beschleunigen statt position ändern
+* beschleunigungsvektor normalisieren
+* rotation anhand der beschleunigung
+* kollisionsabfrage anhand beschleunigungsvektor
+
+
 Step 2:
 + wachsen des schneeballs
 * zerbrechen des balls
