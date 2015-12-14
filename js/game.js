@@ -15,22 +15,28 @@ var ld34 = {
 		var FAR = 5000;
 		var FOV = 45;
 
+		this.clock = new THREE.Clock();
 
 		this.gamecanvas = document.getElementById('gamecanvas');
 		this.renderer = new THREE.WebGLRenderer({canvas: this.gamecanvas});
 		this.renderer.setSize(WIDTH, HEIGHT);
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMapSoft = true;
-		this.renderer.setClearColor(0xc0c0c0,1);
+		this.renderer.setClearColor(0x000510,1);
 		this.scene = new THREE.Scene();
+		this.scene.fog = new THREE.FogExp2(0x000510, 0.0002);
 
 		this.camera = new THREE.PerspectiveCamera(FOV, WIDTH /  HEIGHT, NEAR, FAR);
-		this.camera.position.set(0,210,-60);
-		//this.camera.position.set(-800, 1000, 1000);
+		//this.camera.position.set(0,210,-60);
+		this.camera.position.set(-800, 1000, 1000);
 		this.scene.add(this.camera);
 
-		var light = new THREE.DirectionalLight(0xffffc0, 3);
-		light.position.set(-1000,1000,0);
+		var alight = new THREE.AmbientLight(0x303030);
+		this.scene.add(alight);
+
+
+		var light = new THREE.DirectionalLight(0xFFA030, 3);
+		light.position.set(-1600,200,500);
 		light.castShadow = true;		
 		this.scene.add(light);
 
@@ -46,34 +52,10 @@ var ld34 = {
 			);
 		this.playerMesh.position.set(0,180,0);
 		this.playerMesh.castShadow = true;
-
+		this.loader =  new THREE.JSONLoader();
 
 		this.generateWorld();
 
-
-
-		// das dann generieren
-	/*	this.ground = 
-				new THREE.Mesh(
-					new THREE.PlaneGeometry(100,1000,16),
-					new THREE.MeshPhongMaterial({color:0xfafaff, side:THREE.DoubleSide})
-					);
-
-		this.ground.position.set(0, 0,400);
-		this.ground.receiveShadow = true;
-		this.ground.rotation.x = (Math.PI / 2) + (Math.PI / 8);
-		*/
-	/*	for (var i = 0; i<20; i++) {
-			var mesh = new THREE.Mesh(
-					new THREE.CylinderGeometry(1,8, 25,8),
-					new THREE.MeshPhongMaterial({color: 0x007000, shading: THREE.FlatShading})
-				);
-			mesh.castShadow =  true;
-			mesh.position.set(Math.random() * 100 - 60, 185 - (i * 22), i * 50);
-			this.scene.add(mesh);
-			this.trees.push(mesh);
-		}
-*/
 
 		//this.scene.add(this.ground);
 		
@@ -93,10 +75,15 @@ var ld34 = {
 	generateWorld: function() {
 
 
-		var resWidth = 256,	resLength = 256;
+		var newWorld = new THREE.SphereBufferGeometry(1000,64,64);
+
+
+
+
+		var resWidth = 512,	resLength = 512;
 		var resHalfWidth = resWidth / 2, resHalfLength = resLength / 2;
 
-		var geometry = new THREE.PlaneBufferGeometry(256, 3840, resWidth - 1, resLength - 1);
+		var geometry = new THREE.PlaneBufferGeometry(512, 3840, resWidth - 1, resLength - 1);
 		geometry.rotateX( - Math.PI /2 );
 		var vertices = geometry.attributes.position.array;
 
@@ -109,7 +96,7 @@ var ld34 = {
 		// j+3 weil es immer drei positionsvektoren sind, und wir nur y ändern wollen
 		for (var i=0, j=0, l = vertices.length; i<l;i++,j+=3) {
 			vertices[j + 1] = this.heightMapData[i];
-			var y = ~~ (i / 256);
+			var y = ~~ (i / 512);
 			
 
 			vertices[j + 1] += Math.floor((Math.sin(y * 0.03) / (y * 0.03)) * 1000); //Math.abs((Math.sin(y * 0.05) / (y * 0.05)) * 10);
@@ -123,7 +110,11 @@ var ld34 = {
 
 
 
-
+		var newWorldMesh = new THREE.Mesh(
+			newWorld,
+			new THREE.MeshBasicMaterial({map: texture})
+			);
+		ld34.scene.add(newWorldMesh);		
 
 
 		ld34.ground = new THREE.Mesh(
@@ -135,17 +126,48 @@ var ld34 = {
 		ld34.ground.position.z += 3840 / 2;
 		ld34.scene.add(ld34.ground);
 
+		ld34.loader.load( 'tanne.json', function ( geometry, materials ) {
+			
 
-		for (var i = 0; i<1000; i++) {
+			console.log("tanne loaded");
+			for (var i = 0; i<=50; i++) {
+
+				var mesh = new THREE.Mesh(
+						geometry,
+						 new THREE.MeshFaceMaterial(materials)
+					);
+				mesh.castShadow =  true;
+
+				var desiredZ = Math.random() * 3800;
+				var desiredX = -128 + Math.random() * 256;
+				var desiredY = ld34.heightMapData[(Math.floor(desiredZ / 15) * 256) /*+ (desiredX + 128)*/ ]
+								+ Math.floor(
+								(Math.sin((desiredZ / 15) * 0.03)  /
+										((desiredZ / 15) * 0.03)
+									) * 1000) ;
+
+
+				mesh.position.set(desiredX, 
+						desiredY,
+						desiredZ);
+				mesh.scale.set(3,3,3);
+				
+				ld34.scene.add(mesh);
+				ld34.trees.push(mesh);
+			}
+	
+			for (var i = 0; i<500; i++) {
 			console.log("a tree");
+
+
 			var mesh = new THREE.Mesh(
-					new THREE.CylinderGeometry(1,8, 40,8),
-					new THREE.MeshPhongMaterial({color: 0x007000, shading: THREE.FlatShading})
+					geometry,
+					new THREE.MeshFaceMaterial(materials)
 				);
 			mesh.castShadow =  true;
 			// an den linken rand
 			var desiredZ = Math.random() * 3800;
-			var desiredX = 98 + Math.random() * 60;
+			var desiredX = 200 + Math.random() * 60;
 			var desiredY = ld34.heightMapData[(Math.floor(desiredZ / 15) * 256) /*+ (desiredX + 128)*/ ]
 							+ Math.floor(
 							(Math.sin((desiredZ / 15) * 0.03)  /
@@ -156,62 +178,45 @@ var ld34 = {
 			mesh.position.set(desiredX, 
 					desiredY,
 					desiredZ);
-			
+			mesh.scale.set(3,3,3);
 			ld34.scene.add(mesh);
 			ld34.trees.push(mesh);
 
 
 			// und an den rechten rand
 			var mesh = new THREE.Mesh(
-					new THREE.CylinderGeometry(1,8, 40,8),
-					new THREE.MeshPhongMaterial({color: 0x007000, shading: THREE.FlatShading})
+					geometry,
+					new THREE.MeshFaceMaterial(materials)
 				);
 			mesh.castShadow =  true;
 
 			var desiredZ = Math.random() * 3800;
-			var desiredX = -150 + Math.random() * 60;
+			var desiredX = -250 + Math.random() * 60;
 			var desiredY = ld34.heightMapData[(Math.floor(desiredZ / 15) * 256) /*+ (desiredX + 128)*/ ]
 							+ Math.floor(
 							(Math.sin((desiredZ / 15) * 0.03)  /
 									((desiredZ / 15) * 0.03)
-								) * 1000) + (Math.random() * 30);
+								) * 1000) ;
 
 
 			mesh.position.set(desiredX, 
 					desiredY,
 					desiredZ);
-			
+			mesh.scale.set(3,3,3);
 			ld34.scene.add(mesh);
 			ld34.trees.push(mesh);
 
 		
 		}
 
-		for (var i = 0; i<=100; i++) {
-				// und noch auf der strecke
-
-			var mesh = new THREE.Mesh(
-					new THREE.CylinderGeometry(1,8, 40,8),
-					new THREE.MeshPhongMaterial({color: 0x007000, shading: THREE.FlatShading})
-				);
-			mesh.castShadow =  true;
-
-			var desiredZ = Math.random() * 3800;
-			var desiredX = -128 + Math.random() * 256;
-			var desiredY = ld34.heightMapData[(Math.floor(desiredZ / 15) * 256) /*+ (desiredX + 128)*/ ]
-							+ Math.floor(
-							(Math.sin((desiredZ / 15) * 0.03)  /
-									((desiredZ / 15) * 0.03)
-								) * 1000) + 30;
+		
 
 
-			mesh.position.set(desiredX, 
-					desiredY,
-					desiredZ);
-			
-			ld34.scene.add(mesh);
-			ld34.trees.push(mesh);
-		}
+
+		} );
+
+
+
 
 
 
@@ -377,13 +382,14 @@ var ld34 = {
 				ld34.playerMesh.scale.y = ld34.playerMesh.scale.y * 1.001;
 				ld34.playerMesh.scale.z = ld34.playerMesh.scale.z * 1.001;
 			}
-			ld34.renderer.setClearColor(0xc0c0c0,1);
+			ld34.renderer.setClearColor(0x000510,1);
 		}
 	
 			
-		ld34.camera.position.z = ld34.playerMesh.position.z - 120;
+	/*	ld34.camera.position.z = ld34.playerMesh.position.z - 120;
 		ld34.camera.position.y = ld34.playerMesh.position.y + 100;
 		ld34.camera.position.x = ld34.playerMesh.position.x;
+		*/
 		ld34.camera.lookAt(new THREE.Vector3(ld34.playerMesh.position.x, ld34.playerMesh.position.y + 30, ld34.playerMesh.position.z ));
 		ld34.points+=0.1;
 

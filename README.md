@@ -16,21 +16,33 @@ Step 1:
 
 / punkte, progress
 
-Step 1b:
-* beschleunigen statt position ändern
-* beschleunigungsvektor normalisieren
-* rotation anhand der beschleunigung
-* kollisionsabfrage anhand beschleunigungsvektor
-
 
 Step 2:
 + wachsen des schneeballs
 * zerbrechen des balls
-* perlin noise für gelände und schneekugel
+/ perlin noise für gelände und schneekugel
 * schneefreie spuren generieren
-* randbewaldung
+/ randbewaldung
 * beleuchtung
 * spiel-ende
+
+-------
+
+Okay, nochmal die Szene klären:
+
+
+- dunkel vs. hell
+- sehr low poly -> eventuell das terrain komplett wegschmeißen
+- assets:
+	bäume -  dürfen nicht grün sein - die brauchen schnee
+	andere hindernisse
+
+
+
+
+
+
+
 
 Step 3 - am besten erst Sonntag:
 * name
